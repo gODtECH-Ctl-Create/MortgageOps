@@ -13,8 +13,8 @@ const FormSchema = CreateMortgageApplicationSchema.extend({
   email: z.email(),
   phone: z.string().min(8, "Enter a valid phone number"),
   productId: z.uuid(),
-  requestedAmount: z.coerce.number().positive("Enter a mortgage amount greater than zero"),
-  tenureMonths: z.coerce.number().int().positive(),
+  requestedAmount: z.number().positive("Enter a mortgage amount greater than zero"),
+  tenureMonths: z.number().int().positive(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -91,7 +91,7 @@ export function ApplicationForm() {
         <div className="mb-5"><h2 className="font-semibold">Mortgage request</h2><p className="mt-1 text-sm text-[var(--muted)]">Terms captured here remain subject to credit and underwriting review.</p></div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1.5 text-sm"><span className="font-medium">Mortgage product</span><select {...register("productId")} className="w-full rounded-lg border border-[var(--border)] px-3 py-2.5"><option value="00000000-0000-0000-0000-000000000002">Home Purchase</option><option value="00000000-0000-0000-0000-000000000003">First Home</option></select></label>
-          <label className="space-y-1.5 text-sm"><span className="font-medium">Requested amount (NGN)</span><input type="number" min="0" {...register("requestedAmount")} className="w-full rounded-lg border border-[var(--border)] px-3 py-2.5" /> <FieldError message={errors.requestedAmount?.message} /></label>
+          <label className="space-y-1.5 text-sm"><span className="font-medium">Requested amount (NGN)</span><input type="number" min="0" {...register("requestedAmount", { valueAsNumber: true })} className="w-full rounded-lg border border-[var(--border)] px-3 py-2.5" /> <FieldError message={errors.requestedAmount?.message} /></label>
           <label className="space-y-1.5 text-sm"><span className="font-medium">Tenure</span><select {...register("tenureMonths", { valueAsNumber: true })} className="w-full rounded-lg border border-[var(--border)] px-3 py-2.5"><option value={120}>10 years</option><option value={180}>15 years</option><option value={240}>20 years</option><option value={300}>25 years</option></select></label>
         </div>
       </section>
