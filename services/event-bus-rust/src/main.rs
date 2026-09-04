@@ -16,13 +16,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
 
     let js = jetstream::new(client);
-    let stream = js
-        .get_or_create_stream(Config {
-            name: "MORTGAGEOPS".to_owned(),
-            subjects: vec!["mortgage.>".to_owned()],
-            ..Default::default()
-        })
-        .await?;
+    js.get_or_create_stream(Config {
+        name: "MORTGAGEOPS".to_owned(),
+        subjects: vec!["mortgage.>".to_owned()],
+        ..Default::default()
+    })
+    .await?;
 
     let event = DomainEvent {
         event_type: "application.submitted",
@@ -31,7 +30,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let payload = serde_json::to_vec(&event)?;
-    let ack = stream.publish("mortgage.application.submitted", payload.into()).await?;
+    let ack = js
+        .publish("mortgage.application.submitted", payload.into())
+        .await?;
     ack.await?;
 
     println!("Published mortgage domain event to NATS JetStream.");
