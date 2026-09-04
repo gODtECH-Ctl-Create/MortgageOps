@@ -1,33 +1,85 @@
-# MortgageOps
+<div align="center">
 
-Mortgage Operations, Credit and Financial Control Platform for mortgage institutions.
+# 🏦 MortgageOps
 
-## Product Vision
+### Mortgage operations, credit, and financial control for mortgage institutions.
 
-MortgageOps is an internal operating platform that helps a mortgage bank manage the full lifecycle of a mortgage from application through underwriting, property verification, approval, disbursement, servicing, collections, reconciliation, risk and reporting.
+<p>
+<img src="https://img.shields.io/badge/status-Phase%201-111827" alt="Phase 1">
+<img src="https://img.shields.io/badge/license-proprietary-7c3aed" alt="Proprietary license">
+<img src="https://img.shields.io/badge/domain-mortgage%20operations-0f766e" alt="Mortgage operations">
+</p>
 
-MortgageOps is designed to sit alongside an institution's existing core banking and payment infrastructure rather than attempting to replace the entire banking stack in the first release.
+**A control-tower approach to the mortgage lifecycle.**
 
-## Current Build
+</div>
 
-Phase 1 is now active. The repository contains:
+---
+
+## 🧭 Product vision
+
+MortgageOps is designed to help mortgage institutions manage the lifecycle of a mortgage from application through underwriting, property verification, approval, disbursement, servicing, collections, reconciliation, risk, and reporting.
+
+The product is intended to sit alongside existing core banking and payment infrastructure rather than replace the entire banking stack in its first release.
+
+<table>
+<tr><td width="50%">
+
+### 🧑‍💼 Case management
+Applications, customer cases, documents, and workflow state.
+
+### 📊 Underwriting
+Credit and underwriting workflow with traceable decisions.
+
+### 🏠 Collateral
+Property and collateral records supporting approval and disbursement readiness.
+
+</td><td width="50%">
+
+### 💰 Financial control
+Loan ledger, repayment schedules, reconciliation, and auditable financial history.
+
+### 📈 Control tower
+Management dashboards for operational and financial visibility.
+
+### 🔐 Governance
+Organization-aware access control, traceability, and safe correction patterns.
+
+</td></tr>
+</table>
+
+## 🔄 Mortgage lifecycle
+
+```mermaid
+graph LR
+    A[Application] --> B[Documents]
+    B --> C[Credit & underwriting]
+    C --> D[Property / collateral]
+    D --> E[Approval]
+    E --> F[Disbursement readiness]
+    F --> G[Loan servicing]
+    G --> H[Collections]
+    H --> I[Reconciliation]
+    I --> J[Risk & reporting]
+```
+
+## ✅ Phase 1 foundation
 
 - Product Requirements Document (PRD)
 - Architecture specification
 - Delivery roadmap
 - Next.js / React / TypeScript application shell
 - Mortgage control-tower dashboard prototype
-- Mortgage application workflow state machine
+- Application workflow state machine
 - Money-domain primitives
 - Initial Supabase PostgreSQL schema
 - Organization-aware Row Level Security (RLS) policies
 - Supabase browser client factory
 - Workflow unit tests
-- Continuous Integration (CI) for typecheck, tests and production build
+- Continuous Integration (CI) for type-check, tests, and production build
 
-## MVP Direction
-
-The first release focuses on:
+<details>
+<summary><strong>🎯 Minimum Viable Product (MVP) direction</strong></summary>
 
 1. Application and customer case management
 2. Document management
@@ -39,59 +91,43 @@ The first release focuses on:
 8. Payment reconciliation
 9. Management dashboard
 
-## Repository Structure
+</details>
+
+## 💰 Financial safety principle
+
+Financial state must remain traceable. MortgageOps should preserve the history of decisions, approvals, documents, transactions, and workflow changes.
+
+Corrections to posted financial state should be represented through compensating or reversing entries rather than silently overwriting history.
+
+## 🏗️ Repository map
 
 ```text
-MortgageOps/
-├── app/
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
-├── docs/
-│   ├── PRD.md
-│   ├── ARCHITECTURE.md
-│   └── ROADMAP.md
-├── lib/
-│   ├── money.ts
-│   ├── supabase-browser.ts
-│   └── workflow.ts
-├── supabase/
-│   └── migrations/
-│       ├── 0001_initial_schema.sql
-│       └── 0002_rls_policies.sql
-├── tests/
-│   └── workflow.test.ts
-├── .github/workflows/ci.yml
-├── .env.example
-├── package.json
-└── README.md
+app/                     application shell
+docs/                    PRD, architecture, roadmap
+lib/                     money, workflow, Supabase helpers
+supabase/migrations/     database schema and policies
+tests/                   workflow tests
+.github/workflows/       continuous integration
 ```
 
-## Local Development
+## 🚀 Local development
 
 Requirements: Node.js 22+ and npm.
 
 ```bash
 npm install
 npm run dev
-```
-
-For validation:
-
-```bash
 npm run typecheck
 npm test
 npm run build
 ```
 
-Copy `.env.example` to `.env.local` and provide the Supabase project URL and publishable key before wiring the application to a database.
+Copy `.env.example` to `.env.local` and provide the required Supabase values.
 
-## Financial Safety Principle
+## 📌 Delivery tracking
 
-Financial state must be traceable. MortgageOps should preserve an auditable history of decisions, approvals, documents, financial transactions and workflow changes.
+Phase 1 implementation is tracked in GitHub Issue #1: **Phase 1: Build Mortgage Case Management Foundation**.
 
-Financial corrections should be represented by compensating or reversing entries rather than silently overwriting posted financial history.
+## 🔐 Ownership
 
-## Product Issue
-
-Phase 1 implementation is tracked in GitHub Issue #1: `Phase 1: Build Mortgage Case Management Foundation`.
+MortgageOps is proprietary financial software and product documentation. See [`LICENSE`](./LICENSE) for usage terms.
