@@ -3,12 +3,8 @@ packages:
   - "services/*"
   - "packages/*"
 
-# pnpm 11 requires dependency build scripts to be explicitly allowlisted.
-# Only native/build steps required by the application stack are enabled.
-onlyBuiltDependencies:
-  - esbuild
-  - msgpackr-extract
-
-# Optional telemetry package does not need to execute install-time scripts.
-ignoredBuiltDependencies:
-  - "@scarf/scarf"
+# pnpm 11 build-script allowlist.
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+  "@scarf/scarf": false
