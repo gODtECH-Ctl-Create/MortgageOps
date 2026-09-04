@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
+    "@mortgageops/schemas": "workspace:*",
     "@supabase/supabase-js": "2.112.4",
     "@tanstack/react-query": "5.102.8",
     "@tanstack/react-table": "9.2.4",

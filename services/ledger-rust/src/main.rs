@@ -42,7 +42,9 @@ fn validate_entry(request: &PostEntryRequest) -> Result<Decimal, LedgerError> {
     Ok(amount)
 }
 
-async fn post_entry(Json(request): Json<PostEntryRequest>) -> Result<Json<PostEntryResponse>, String> {
+async fn post_entry(
+    Json(request): Json<PostEntryRequest>,
+) -> Result<Json<PostEntryResponse>, String> {
     let amount = validate_entry(&request).map_err(|error| error.to_string())?;
 
     // Persistence and database transaction are intentionally the next layer.
@@ -60,7 +62,11 @@ async fn main() {
     let app = Router::new().route("/v1/ledger/entries", post(post_entry));
     let address = SocketAddr::from(([0, 0, 0, 0], 4100));
 
-    let listener = tokio::net::TcpListener::bind(address).await.expect("bind ledger service");
+    let listener = tokio::net::TcpListener::bind(address)
+        .await
+        .expect("bind ledger service");
     println!("MortgageOps Rust ledger listening on {address}");
-    axum::serve(listener, app).await.expect("ledger server failed");
+    axum::serve(listener, app)
+        .await
+        .expect("ledger server failed");
 }
