@@ -23,7 +23,9 @@ pub fn evaluate_underwriting(input: JsValue) -> Result<JsValue, JsValue> {
         .map_err(|error| JsValue::from_str(&error.to_string()))?;
 
     if input.monthly_income <= 0.0 || input.property_value <= 0.0 || input.requested_amount <= 0.0 {
-        return Err(JsValue::from_str("Income, property value and requested amount must be positive"));
+        return Err(JsValue::from_str(
+            "Income, property value and requested amount must be positive",
+        ));
     }
 
     let debt_service_ratio = input.monthly_obligations / input.monthly_income;
