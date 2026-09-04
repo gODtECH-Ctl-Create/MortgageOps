@@ -1,14 +1,6 @@
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
-import { z } from "zod";
-
-const CreateApplicationSchema = z.object({
-  customerId: z.string().uuid(),
-  productId: z.string().uuid(),
-  requestedAmount: z.number().positive(),
-  tenureMonths: z.number().int().positive(),
-});
-
-type CreateApplicationInput = z.infer<typeof CreateApplicationSchema>;
+import type { MortgageApplicationStatus } from "@mortgageops/domain";
+import { CreateMortgageApplicationSchema, type CreateMortgageApplicationInput } from "@mortgageops/schemas";
 
 @Controller("applications")
 export class ApplicationsController {
@@ -24,19 +16,19 @@ export class ApplicationsController {
   getApplication(@Param("id") id: string) {
     return {
       id,
-      status: "DRAFT",
+      status: "DRAFT" satisfies MortgageApplicationStatus,
     };
   }
 
   @Post()
   createApplication(@Body() body: unknown) {
-    const input: CreateApplicationInput = CreateApplicationSchema.parse(body);
+    const input: CreateMortgageApplicationInput = CreateMortgageApplicationSchema.parse(body);
 
     return {
       message: "Application command accepted by API boundary.",
       data: {
         applicationId: crypto.randomUUID(),
-        status: "DRAFT",
+        status: "DRAFT" satisfies MortgageApplicationStatus,
         ...input,
       },
     };
