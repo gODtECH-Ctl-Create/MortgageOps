@@ -19,20 +19,27 @@ The platform is intentionally polyglot: each major technology has a defined resp
                              │
                        Domain Services
                              │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-    PostgreSQL            Storage             AI Service
-    Supabase              S3-style             FastAPI
-        │                 object store         Python
-        │                    │                    │
-        └────────────────────┼────────────────────┘
-                             │
-                       Integrations
-                             │
-       ┌─────────────┬───────┼────────┬──────────────┐
-       │             │                │              │
-   Core Banking     KYC            Banking       Messaging
-    /Loan System   Providers        /Payments     Email/SMS
+     ┌───────────────────────┼────────────────────────┐
+     │                       │                        │
+ PostgreSQL              Rust Ledger              AI Service
+ System of Record        Axum + Decimal            FastAPI
+     │                       │                        │
+     │                       └───────┐                │
+     │                               │                │
+     │                        NATS JetStream           │
+     │                               │                │
+     │                ┌──────────────┼──────────────┐ │
+     │                │              │              │ │
+     │             Elixir           Go          Analytics
+     │             Phoenix      Integration       ClickHouse
+     │             Live Ops      Gateway             │
+     │                │              │             DuckDB
+     │                │              │
+     │                └──────────────┼──────────────┘
+     │                               │
+     │                         External Systems
+     │
+     └─────── OPA/Rego + WebAssembly Policy Runtime
 ```
 
 ## 2. Technology Stack
@@ -49,6 +56,7 @@ The platform is intentionally polyglot: each major technology has a defined resp
 - React Hook Form for form state
 - Zod for runtime validation and typed schemas
 - Recharts for operational analytics
+- Lucide for interface icons
 
 The web layer owns presentation, navigation, accessible interaction, and client-side experience. It must not become the system of record for financial logic.
 
@@ -72,11 +80,23 @@ The API owns authentication context, authorization, domain commands, workflow or
 
 The core financial model remains relational. We do not introduce a second primary database without a concrete workload reason.
 
-### ORM / query access
+### Financial core
 
-The first choice for application data access is a typed SQL layer around PostgreSQL. Drizzle can be introduced for developer ergonomics while SQL migrations remain authoritative.
+- Rust
+- Axum HTTP service
+- `rust_decimal` for fixed-precision financial arithmetic
+- Tokio asynchronous runtime
 
-We should not run Prisma, Drizzle and another ORM simultaneously in the same domain.
+Rust is reserved for code where correctness of money arithmetic, validation and controlled concurrency matter most. `rust_decimal` is specifically designed for fixed-precision financial calculations, while Axum provides the HTTP boundary for the service. citeturn388447search6turn520539search10turn534164search3
+
+### Policy engine
+
+Two policy execution paths are being explored:
+
+1. Open Policy Agent (OPA) / Rego for human-readable, declarative policies.
+2. WebAssembly (Wasm) for portable rule execution where the same deterministic policy must run in multiple environments. WebAssembly has standardized browser and non-browser embeddings, including WASI. citeturn520539search6
+
+Credit decisions remain policy-governed and human-authorized. Policy engines calculate eligibility and exceptions; they do not self-authorize lending.
 
 ### Caching and background work
 
@@ -94,6 +114,31 @@ Example jobs:
 - SLA escalation
 - Daily portfolio snapshots
 - Statement generation
+
+### Event transport
+
+- NATS Core for lightweight messaging
+- JetStream for durable domain-event streams
+- Rust publisher in the first systems experiment
+
+NATS is deliberately preferred for the first event-oriented experiments because it provides secure, high-performance messaging and JetStream durability without requiring a Kafka cluster on day one. citeturn520539search4turn388447search10
+
+### Live operations
+
+- Elixir
+- Phoenix 1.8
+- Phoenix PubSub
+- Phoenix Channels / LiveView as the operational-realtime surface evolves
+
+The Elixir runtime is a good fit for connected operator presence, live queues, notifications and soft-realtime case events. Phoenix Channels use PubSub for bidirectional soft-realtime messaging, and Phoenix 1.8.13 is the current maintained 1.8 line. citeturn400593search2turn617979search1
+
+### Bank and external-system gateway
+
+- Go
+- Standard `net/http` first
+- Provider-specific adapters isolated behind integration contracts
+
+Go is used for low-dependency, long-running adapters that talk to core banking, payment, identity or verification providers. The Go toolchain currently has the 1.25.14 patch release available. citeturn388447search5
 
 ### Document and file storage
 
@@ -123,6 +168,13 @@ Initial AI responsibilities:
 - Analyst assistance
 
 AI does not directly post financial transactions or make final credit approvals.
+
+### Analytics
+
+- ClickHouse for portfolio/event analytics and high-cardinality operational queries
+- DuckDB for controlled local reconciliation and finance investigation workloads
+
+ClickHouse is designed for high-throughput analytical ingestion and concurrent real-time queries. DuckDB is embedded and can work directly with CSV, JSON and Parquet, making it useful for investigator workflows without another always-on database. citeturn520539search2turn520539search9turn520539search14
 
 ### Observability
 
@@ -161,8 +213,16 @@ MortgageOps/
 ├── lib/                       # Web/domain adapters
 ├── services/
 │   ├── api/                   # NestJS API
+│   ├── ledger-rust/           # Rust financial core
+│   ├── event-bus-rust/        # Rust/NATS event publisher
+│   ├── realtime-elixir/       # Elixir/Phoenix operational realtime
+│   ├── integration-go/        # Go external-system gateway
 │   ├── worker/                # BullMQ workers
-│   └── ai/                    # FastAPI/Python document intelligence
+│   ├── ai/                    # FastAPI/Python document intelligence
+│   ├── analytics-clickhouse/  # Analytical schema + queries
+│   ├── reconciliation-duckdb/ # Finance investigation workspace
+│   ├── rules-wasm/            # WebAssembly deterministic rules
+│   └── policy-opa/            # OPA/Rego policies
 ├── packages/
 │   ├── domain/                # Shared domain types and invariants
 │   ├── schemas/               # Shared validation contracts
@@ -175,10 +235,10 @@ MortgageOps/
 │   ├── unit/
 │   ├── integration/
 │   └── e2e/
-├── docs/
 ├── infra/
 │   ├── docker/
 │   └── deployment/
+├── docs/
 ├── .github/workflows/
 ├── package.json
 ├── pnpm-workspace.yaml
@@ -355,7 +415,7 @@ MATURED / CLOSED
 
 Exception paths must be first-class states rather than informal notes.
 
-For long-running workflows, the application should start with explicit domain state and BullMQ jobs. A workflow engine such as Temporal is a later option if workflow durability and cross-service orchestration justify the additional operational complexity.
+For long-running workflows, the application should start with explicit domain state and BullMQ jobs. Temporal is a later experiment for durable, multi-day orchestration if that workload becomes real.
 
 ## 9. Integration Strategy
 
@@ -447,13 +507,14 @@ Application submitted
         │
         └── outbox event
                 │
-                └── worker
-                     ├── notification
-                     ├── task creation
-                     └── analytics update
+                └── NATS JetStream
+                     ├── Elixir live ops
+                     ├── Go integration gateway
+                     ├── ClickHouse analytics
+                     └── notifications
 ```
 
-Kafka or another distributed event streaming platform can be introduced later when transaction volume, integration fan-out or independent consumer workloads justify it. It is deliberately not a V1 dependency.
+Kafka remains a later option when event volume, partitioning requirements or ecosystem integrations justify it.
 
 ## 15. API and Contract Strategy
 
@@ -485,24 +546,33 @@ Final credit approvals, financial postings and other controlled decisions remain
 A new technology must have a named problem, owner and failure strategy.
 
 ```text
-Technology       Primary purpose
-----------------------------------------------------
-Next.js          Internal web application
-NestJS           Domain/API service
-PostgreSQL       Transactional source of truth
-Supabase         Managed Postgres/auth/storage during early phases
-Redis            Cache + transient coordination
-BullMQ           Background jobs
-FastAPI/Python   Document/AI processing
-S3-compatible    Document object storage
-OpenTelemetry    Distributed traces/telemetry
-Sentry           Error monitoring
-Vitest           Unit/domain tests
-Playwright       End-to-end tests
-Testcontainers   Integration environments
-Docker           Reproducible services
-pnpm/Turborepo   Monorepo tooling
-GitHub Actions   CI automation
+Technology              Primary purpose
+-------------------------------------------------------
+Next.js/React           Internal web application
+NestJS                  Domain/API service
+PostgreSQL              Transactional source of truth
+Supabase                Managed Postgres/auth/storage
+Rust/Axum               Financial core
+rust_decimal            Fixed-precision money math
+WebAssembly             Portable deterministic rules
+OPA/Rego                Declarative policies
+Redis                   Cache + transient coordination
+BullMQ                  Background jobs
+NATS JetStream          Durable domain events
+Elixir/Phoenix          Live operations
+Go                      External integration gateway
+FastAPI/Python          Document/AI processing
+S3-compatible storage   Protected mortgage documents
+ClickHouse              Portfolio/event analytics
+DuckDB                  Finance investigation workspace
+OpenTelemetry            Distributed tracing
+Sentry                  Error monitoring
+Vitest                  Unit/domain tests
+Playwright              End-to-end tests
+Testcontainers           Integration environments
+Docker                  Reproducible services
+pnpm/Turborepo           Monorepo tooling
+GitHub Actions           CI automation
 ```
 
-We intentionally defer Kafka, Temporal, GraphQL, Elasticsearch/OpenSearch, Kubernetes and additional databases until measurable requirements justify them.
+We intentionally defer Kafka, Kubernetes, Elasticsearch/OpenSearch and additional primary databases until measurable requirements justify them.
