@@ -57,3 +57,75 @@ jobs:
 
       - name: Compile Python sources
         run: python -m compileall app
+
+  rust:
+    name: Rust systems validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
+
+      - name: Check ledger service
+        run: cargo check --manifest-path services/ledger-rust/Cargo.toml
+
+      - name: Check NATS event bus
+        run: cargo check --manifest-path services/event-bus-rust/Cargo.toml
+
+      - name: Check WebAssembly rules
+        run: cargo check --manifest-path services/rules-wasm/Cargo.toml --target wasm32-unknown-unknown
+
+      - name: Format check
+        run: |
+          cargo fmt --manifest-path services/ledger-rust/Cargo.toml -- --check
+          cargo fmt --manifest-path services/event-bus-rust/Cargo.toml -- --check
+          cargo fmt --manifest-path services/rules-wasm/Cargo.toml -- --check
+
+  go:
+    name: Go integration validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/integration-go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.14"
+          cache: false
+
+      - name: Test and build
+        run: |
+          go test ./...
+          go build ./...
+
+  elixir:
+    name: Elixir realtime validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup BEAM
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.5"
+          otp-version: "27.3"
+          version-type: loose
+
+      - name: Fetch Elixir dependencies
+        working-directory: services/realtime-elixir
+        run: mix deps.get
+
+      - name: Compile
+        working-directory: services/realtime-elixir
+        run: mix compile --warnings-as-errors
