@@ -71,6 +71,7 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
+          cache: false
 
       - name: Check ledger service
         run: cargo check --manifest-path services/ledger-rust/Cargo.toml
