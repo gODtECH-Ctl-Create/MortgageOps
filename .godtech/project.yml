@@ -1,0 +1,9 @@
+project:
+  state: paused
+  priority: medium
+  current_focus: "Mortgage operations foundation"
+  next_step: "Resume the next product slice when mortgage work becomes a current priority"
+  blockers:
+    - "No recent implementation work after the Phase 1 foundation."
+  status_note: "Phase 1 foundation exists; the product is not currently a top active build."
+  last_worked_on: "2026-10-04"
